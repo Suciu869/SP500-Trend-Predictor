@@ -13,7 +13,6 @@ print("Încărcare CSV...")
 csv_path = os.path.join(BASE_PATH, 'BIG_DATASET_BURSA.csv')
 df = pd.read_csv(csv_path)
 
-# 2. Alegem Feature-urile
 feature_cols = [
     'RSI', 'Price_vs_SMA50', 'Volume', 
     'Forward_PE', 'Trailing_EPS', 'Profit_Margins', 
@@ -22,7 +21,6 @@ feature_cols = [
 
 df_clean = df.dropna(subset=feature_cols)
 
-# Definim X (Input) și y (Target)
 X = df_clean[feature_cols].values
 y = df_clean['Target'].values
 
@@ -31,21 +29,16 @@ print(f"Antrenăm pe {len(X)} exemple de tranzacționare.")
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, shuffle=True)
 
-# 4. Normalizare (SCALĂM DUPĂ)
 scaler = StandardScaler()
 
-# Învățăm scala DOAR de pe datele de antrenament
 X_train_scaled = scaler.fit_transform(X_train)
 
-# Aplicăm aceeași scală pe datele de test (fără să re-învățăm!)
 X_test_scaled = scaler.transform(X_test)
 
-# 5. Salvare Scaler
 scaler_path = os.path.join(BASE_PATH, 'scaler_universal.pkl')
 joblib.dump(scaler, scaler_path) 
 print(f"Scaler salvat în: {scaler_path}")
 
-# 6. Modelul Neural
 model = tf.keras.models.Sequential([
     tf.keras.layers.Input(shape=(X_train_scaled.shape[1],)),
     
@@ -64,15 +57,11 @@ model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
               loss='binary_crossentropy',
               metrics=['accuracy'])
 
-# 7. Antrenare
-# ATENȚIE: Folosim X_train_scaled și X_test_scaled
 history = model.fit(X_train_scaled, y_train, 
                     epochs=20, 
                     batch_size=64, 
                     validation_data=(X_test_scaled, y_test))
 
-# 8. Evaluare și Salvare Model
-print("\n--- REZULTATE ---")
 loss, acc = model.evaluate(X_test_scaled, y_test)
 print(f"Acuratețe pe date noi: {acc*100:.2f}%")
 
